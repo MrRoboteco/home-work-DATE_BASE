@@ -11,21 +11,21 @@ GROUP BY genre.genre_id
 ORDER BY artist_count DESC ;
 
 --Количество треков, вошедших в альбомы 2019–2020 годов
-SELECT track.track_id, count(album.album_id) AS count_track
+SELECT count (track.track_id)
 FROM track
-JOIN album ON track.track_id = album.album_id 
-WHERE album.album_year  BETWEEN 2019 AND 2020
-GROUP BY track_id;
+JOIN album ON track.album_id= album.album_id 
+WHERE album.album_year  BETWEEN 2019 AND 2020;
+--GROUP BY track_id;
 
 -- подробнее
-SELECT track.track_name,album.album_year,
-count(*) AS count_of_rows
-FROM track
-JOIN album ON track.track_id = album.album_id
-WHERE album.album_year 
-BETWEEN 2019 AND 2020
-GROUP BY track.track_name,
-album.album_year;
+--SELECT track.track_name,album.album_year,
+--count(*) AS count_of_rows
+--FROM track
+--JOIN album ON track.album_id = album.album_id
+--WHERE album.album_year 
+--BETWEEN 2019 AND 2020
+--GROUP BY track.track_name,
+--album.album_year;
 
 --Средняя продолжительность треков по каждому альбому
 SELECT album.album_name,
@@ -36,21 +36,27 @@ JOIN track ON album.album_id = track.track_id
 GROUP BY album.album_name;
 
 --Все исполнители, которые не выпустили альбомы в 2020 году
-SELECT artist.*,album.album_year
+
+SELECT artist_nickname
 FROM artist
-JOIN album ON artist.artist_id = album.album_id
-WHERE album.album_year NOT IN (2020);
+WHERE artist.artist_id NOT IN (
+  SELECT artist_id
+  FROM artist_album
+  JOIN album ON artist_album.album_id = album.album_id
+  WHERE album.album_year = 2020
+);
+
 
 --Названия сборников, в которых присутствует конкретный исполнитель (выберите его сами).
-SELECT collection.collection_name,artist.artist_nickname
+SELECT DISTINCT collection.collection_name,artist.artist_nickname
 FROM collection
 JOIN track_collection ON collection.collection_id = track_collection.collection_id
 JOIN track ON track_collection.track_id = track.track_id 
 JOIN album ON track.album_id = album.album_id 
 JOIN artist_album ON album.album_id = artist_album.album_id 
 JOIN artist ON artist_album.artist_id = artist.artist_id 
-WHERE artist.artist_nickname iLIKE 'Wardruna'
-GROUP BY collection.collection_name,artist.artist_nickname;
+WHERE artist.artist_nickname  = 'Wardruna'
+
 
 --Названия альбомов, в которых присутствуют исполнители более чем одного жанра.
  SELECT album.album_name,artist.artist_nickname
@@ -82,9 +88,22 @@ GROUP BY collection.collection_name,artist.artist_nickname;
 -- SELECT album.album_name 
 -- FROM album
 -- JOIN track ON album.album_id = track.album_id
-SELECT album.album_name, track.album_id , count(*)  AS count_row
-FROM track 
+--SELECT album.album_name, track.album_id , count(*)  AS count_row
+--FROM track 
+--JOIN album ON track.album_id = album.album_id
+--GROUP BY track.album_id,album.album_name 
+--ORDER BY count_row ASC
+--LIMIT 2;
+
+SELECT album.album_name
+FROM track
 JOIN album ON track.album_id = album.album_id
-GROUP BY track.album_id,album.album_name 
-ORDER BY count_row ASC
-LIMIT 2;
+GROUP BY album.album_id
+HAVING count(track.track_id) = (
+  SELECT count(track_id)
+  FROM track
+  WHERE album.album_id = track.album_id
+  GROUP BY album.album_id
+  ORDER BY 1
+  LIMIT 1
+);
