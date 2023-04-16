@@ -1,5 +1,6 @@
 
 
+
 -- заполнение таблицы genre
 INSERT INTO genre (genre_name)
 VALUES ('folk');
